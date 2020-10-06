@@ -114,6 +114,12 @@ except ImportError:
     # LibreSSL does not provide RAND_egd
     pass
 
+# Hook up FIPS functions from _ssl.c
+try:
+    from _ssl import FIPS_mode, FIPS_mode_set
+except ImportError:
+    pass
+
 
 from _ssl import HAS_SNI, HAS_ECDH, HAS_NPN, HAS_ALPN, HAS_TLSv1_3
 from _ssl import _OPENSSL_API_VERSION

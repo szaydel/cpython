@@ -5220,6 +5220,43 @@ _ssl_enum_crls_impl(PyObject *module, const char *store_name)
 
 #endif /* _MSC_VER */
 
+/* Comment the below macro definition
+ * to exclude FIPS_mode functions from build. */
+#define EXPORT_FIPSMODE_FUNCS
+
+#ifdef EXPORT_FIPSMODE_FUNCS
+
+static PyObject *
+PySSL_FIPS_mode(PyObject *self) {
+    return PyLong_FromLong(FIPS_mode());
+}
+
+PyDoc_STRVAR(PySSL_FIPS_mode_doc,
+"FIPS_mode() -> int\n\
+\n\
+Returns != 0 (1) if FIPS mode is enabled, 0 otherwise.");
+
+static PyObject *
+PySSL_FIPS_mode_set(PyObject *self, PyObject *arg) {
+    if (!PyLong_Check(arg))
+        return PyErr_Format(PyExc_TypeError,
+                            "FIPS_mode_set() expected int, found %s",
+                            Py_TYPE(arg)->tp_name);
+    if (FIPS_mode_set(PyLong_AsUnsignedLong(arg)) == 0) {
+        _setSSLError(ERR_error_string(ERR_get_error(), NULL) , 0, __FILE__, __LINE__);
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(PySSL_FIPS_mode_set_doc,
+"FIPS_mode_set(mode) -> None\n\
+\n\
+Tries to set the FIPS mode to 'mode' (int).\n\
+Returns nothing. Raises TypeError when 'mode' is invalid,\n\
+SSLError when enabling FIPS mode fails.");
+#endif  //EXPORT_FIPSMODE_FUNCS
+
 /* List of functions exported by this module. */
 static PyMethodDef PySSL_methods[] = {
     _SSL__TEST_DECODE_CERT_METHODDEF
@@ -5233,6 +5270,12 @@ static PyMethodDef PySSL_methods[] = {
     _SSL_ENUM_CRLS_METHODDEF
     _SSL_TXT2OBJ_METHODDEF
     _SSL_NID2OBJ_METHODDEF
+#ifdef EXPORT_FIPSMODE_FUNCS
+    {"FIPS_mode", (PyCFunction)PySSL_FIPS_mode, METH_NOARGS,
+    PySSL_FIPS_mode_doc},
+    {"FIPS_mode_set", (PyCFunction)PySSL_FIPS_mode_set, METH_O,
+    PySSL_FIPS_mode_set_doc},
+#endif
     {NULL,                  NULL}            /* Sentinel */
 };
 
